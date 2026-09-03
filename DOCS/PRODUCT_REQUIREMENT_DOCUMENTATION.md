@@ -53,17 +53,17 @@ mindmap
       Auditable metrics
 ```
 
-### Persona 1: Sarah Jenkins — Corporate Employee (Requester)
-- **Role:** Financial Operations Specialist (Building 2, Floor 3).
+### Persona 1: Corporate Employee (Requester)
+- **Role:** e.g Financial Operations Specialist (Building 2, Floor 3).
 - **Pain Points:** Submits tickets and has no idea when someone will arrive; technicians often mark tickets "resolved" while the issue persists.
 - **Needs:** Rapid submission with templates; real-time notifications when a technician is en route; authority to verify the fix before the ticket is closed.
 
-### Persona 2: Marcus Vance — Senior Field IT Serviceman
-- **Role:** Endpoints & Systems Support Specialist.
+### Persona 2: IT_OFFICER_X - Field IT Serviceman
+- **Role:** IT Officer.
 - **Pain Points:** Feels that some colleagues avoid difficult tickets; dislikes manual dispatch bias; wants recognized ratings for high-quality repairs.
 - **Needs:** Predictable, fair assignment odds; focused mobile-friendly portal displaying ticket details and user contact info; transparent customer ratings.
 
-### Persona 3: Alex Mercer — IT Operations Supervisor (Admin)
+### Persona 3: IT Operations Supervisor (Admin)
 - **Role:** Director of IT Infrastructure & Help Desk Operations.
 - **Pain Points:** Spends hours triaging tickets and manually deciding assignments; struggles to track which technicians are sick, on leave, or in another building.
 - **Needs:** Algorithmic recommendation showing the best candidate; one-click dispatch; simple toggle to mark technicians absent or restore them to available; comprehensive audit trail.
@@ -142,7 +142,7 @@ mindmap
        |
 [Click "Submit Service Request"] -> [Real-time Status: "Pending Admin Evaluation"]
        |
-[Notification: "Marcus Vance Dispatched (72% Odds)"] -> [Status: "Assigned"]
+[Notification: "IT_OFFICER_X Dispatched (72% Odds)"] -> [Status: "Assigned"]
        |
 [Marcus Arrives on Site] -> [Status: "In Progress"]
        |
@@ -150,20 +150,20 @@ mindmap
        |
 [Sarah Tests Dual Monitors at 4K 60Hz] -> [Clicks "Review & Terminate Session"]
        |
-[Rates 5 Stars: "Fixed in 10 minutes!"] -> [Confetti Burst + Marcus Released to Unoccupied]
+[Rates 5 Stars: "Fixed in 10 minutes!"] -> [Confetti Burst + IT_OFFICER_X Released to Unoccupied]
 ```
 
 ### 5.2 The Supervisor Journey: Alex Managing Morning Rush
 ```
-[Alex Logs In as Admin] -> [Views Dashboard: 4 Requests Pending, 3 Unoccupied Techs]
+[ADMIN Logs In as Admin] -> [Views Dashboard: 4 Requests Pending, 3 Unoccupied Techs]
        |
-[Clicks Ticket REQ-1048] -> [Modal Opens: Marcus Vance Recommended at 72% Odds]
+[Clicks Ticket REQ-1048] -> [Modal Opens: IT_OFFICER_X Recommended at 72% Odds]
        |
-[Confirms Dispatch] -> [Ticket Assigned, Marcus Status Changed to Occupied]
+[Confirms Dispatch] -> [Ticket Assigned, IT_OFFICER_X Status Changed to Occupied]
        |
-[Roster Review: Elena reports sick] -> [Alex clicks "Mark Absent" on Elena]
+[Roster Review: IT_OFFICER_Y reports sick] -> [ADMIN clicks "Mark Absent" on IT_OFFICER_Y]
        |
-[Elena excluded from Round 1 odds pool] -> [All metrics recalculate dynamically]
+[IT_OFFICER_Y excluded from Round 1 odds pool] -> [All metrics recalculate dynamically]
 ```
 
 ---
