@@ -17,17 +17,17 @@ export class UserEntity {
   @Column({ type: 'varchar', length: 20, default: 'user' })
   role: 'user' | 'admin' | 'it_guy';
 
-  @Column({ type: 'varchar', length: 100 })
-  department: string;
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  department: string | null;
 
-  @Column({ type: 'varchar', length: 50 })
-  building: string;
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  building: string | null;
 
-  @Column({ type: 'varchar', length: 50 })
-  floor: string;
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  floor: string | null;
 
-  @Column({ type: 'varchar', length: 50 })
-  room: string;
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  room: string | null;
 
   @Column({ type: 'varchar', length: 50 })
   phone: string;

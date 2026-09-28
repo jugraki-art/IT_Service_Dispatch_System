@@ -14,10 +14,10 @@ export class TechnicianEntity {
   @Column({ type: 'varchar', length: 50 })
   phone: string;
 
-  @Column({ type: 'varchar', length: 100, default: 'IT Support Engineer' })
+  @Column({ type: 'varchar', length: 100, default: 'IT Support Engineer', nullable: true })
   roleTitle: string;
 
-  @Column({ type: 'varchar', length: 100, default: 'IT End-User Services' })
+  @Column({ type: 'varchar', length: 100, default: 'IT Support', nullable: true })
   department: string;
 
   @Column({ type: 'varchar', length: 20, default: 'unoccupied' })
@@ -38,10 +38,10 @@ export class TechnicianEntity {
   @Column({ type: 'datetime', nullable: true })
   lastAssignedAt: Date | null;
 
-  @Column({ type: 'decimal', precision: 3, scale: 2, default: 5.0 })
+  @Column({ type: 'decimal', precision: 3, scale: 2, default: 5.0, nullable: true })
   rating: number;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: 'int', default: 0, nullable: true })
   ratingsCount: number;
 
   @Column({ type: 'boolean', default: true })

@@ -3,8 +3,6 @@ import { useApp } from '../context/AppContext';
 import {
   Server,
   Bell,
-  Volume2,
-  VolumeX,
   LogOut,
   Shield,
   Wrench,
@@ -18,8 +16,6 @@ export const Header: React.FC = () => {
     unreadCount,
     isNotifDrawerOpen,
     setIsNotifDrawerOpen,
-    soundEnabled,
-    setSoundEnabled,
     odds,
     logout,
   } = useApp();
@@ -164,21 +160,14 @@ export const Header: React.FC = () => {
               <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0f172a', lineHeight: 1.2 }}>
                 {currentUser.name}
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                {currentUser.department}
-              </div>
+              {currentUser.role !== 'it_guy' && (
+                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                  {currentUser.department}
+                </div>
+              )}
             </div>
             {getRoleBadge(currentUser.role)}
           </div>
-
-          {/* Sound Toggle */}
-          <button
-            className="icon-btn"
-            title={soundEnabled ? 'Mute Sound' : 'Enable Sound'}
-            onClick={() => setSoundEnabled(!soundEnabled)}
-          >
-            {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-          </button>
 
           {/* Notification Bell */}
           <button

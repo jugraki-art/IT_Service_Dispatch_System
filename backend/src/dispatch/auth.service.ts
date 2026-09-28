@@ -124,10 +124,10 @@ export class AuthService {
       email,
       password: dto.password,
       role: dto.role,
-      department: dto.department || 'General Staff',
-      building: dto.building || 'Building 1',
-      floor: dto.floor || 'Floor 1',
-      room: dto.room || 'Room 101',
+      department: dto.role === 'it_guy' ? null : (dto.department || 'General Staff'),
+      building: dto.role === 'it_guy' ? null : (dto.building || null),
+      floor: dto.role === 'it_guy' ? null : (dto.floor || null),
+      room: dto.role === 'it_guy' ? null : (dto.room || null),
       phone: dto.phone || '+1 (555) 000-0000',
       avatarUrl:
         dto.role === 'it_guy'

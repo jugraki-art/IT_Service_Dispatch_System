@@ -188,8 +188,8 @@ export const AdminPortal: React.FC = () => {
                     <div className="ticket-title">{req.title}</div>
                   </div>
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    <span className={`badge badge-urgent-${req.urgency}`}>
-                      {req.urgency.toUpperCase()}
+                    <span className={`badge badge-urgent-${req.urgency || 'medium'}`}>
+                      {(req.urgency || 'medium').toUpperCase()}
                     </span>
                     <span className="badge badge-pending_admin">Awaiting Dispatch</span>
                   </div>
@@ -267,10 +267,8 @@ export const AdminPortal: React.FC = () => {
               <thead>
                 <tr>
                   <th>Technician</th>
-                  <th>Role & Dept</th>
                   <th>Current Status</th>
                   <th>Round {odds?.roundNumber || 1} Turn</th>
-                  <th>Rating</th>
                   <th>Completed</th>
                   <th>Admin Attendance Action</th>
                 </tr>
@@ -300,13 +298,6 @@ export const AdminPortal: React.FC = () => {
                               {tech.phone}
                             </div>
                           </div>
-                        </div>
-                      </td>
-
-                      <td>
-                        <div style={{ fontSize: '0.85rem' }}>{tech.roleTitle}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                          {tech.department}
                         </div>
                       </td>
 
@@ -342,16 +333,6 @@ export const AdminPortal: React.FC = () => {
                             ⭐ Fresh Turn Available
                           </span>
                         )}
-                      </td>
-
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ color: '#f59e0b', fontSize: '0.85rem' }}>★</span>
-                          <strong style={{ fontSize: '0.85rem' }}>{tech.rating}</strong>
-                          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                            ({tech.ratingsCount})
-                          </span>
-                        </div>
                       </td>
 
                       <td>
@@ -623,7 +604,7 @@ export const AdminPortal: React.FC = () => {
                         </div>
 
                         <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
-                          {candidate.roleTitle} • Idle: {candidate.idleMinutesFormatted} • ★ {candidate.rating}
+                          Idle: {candidate.idleMinutesFormatted}
                         </div>
 
                         <div className="odds-percentage-bar-bg">

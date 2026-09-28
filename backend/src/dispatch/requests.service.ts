@@ -6,6 +6,7 @@ import { TechnicianEntity } from './entities/technician.entity.js';
 import { CreateRequestDto } from './dto/create-request.dto.js';
 import { NotificationsService } from './notifications.service.js';
 import { AuditService } from './audit.service.js';
+import { UserEntity } from './entities/user.entity.js';
 import { randomUUID } from 'node:crypto';
 
 @Injectable()
@@ -15,28 +16,61 @@ export class RequestsService {
     private readonly reqRepo: Repository<ServiceRequestEntity>,
     @InjectRepository(TechnicianEntity)
     private readonly techRepo: Repository<TechnicianEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepo: Repository<UserEntity>,
     private readonly notifService: NotificationsService,
     private readonly auditService: AuditService,
   ) {}
 
   async create(dto: CreateRequestDto): Promise<ServiceRequestEntity> {
-    const totalCount = await this.reqRepo.count();
-    const ticketNumber = `REQ-${1040 + totalCount + 1}`;
+    const allRequests = await this.reqRepo.find({ select: { ticketNumber: true } });
+    let maxNumber = 1040;
+    const existingSet = new Set<string>();
+    for (const r of allRequests) {
+      if (r.ticketNumber) {
+        existingSet.add(r.ticketNumber);
+        const match = r.ticketNumber.match(/\d+/);
+        if (match) {
+          const num = parseInt(match[0], 10);
+          if (num > maxNumber) {
+            maxNumber = num;
+          }
+        }
+      }
+    }
+    let candidateNum = maxNumber + 1;
+    while (existingSet.has(`REQ-${candidateNum}`)) {
+      candidateNum++;
+    }
+    const ticketNumber = `REQ-${candidateNum}`;
+    const rawDesc = dto.description || (dto as any).issueDescription || dto.title || 'IT Service Request';
+    const desc = rawDesc.trim();
+    const title = dto.title || (desc.length > 60 ? desc.slice(0, 57) + '...' : desc);
+
+    let user: UserEntity | null = null;
+    if (dto.requesterId) {
+      user = await this.userRepo.findOne({ where: { id: dto.requesterId } });
+    } else if (dto.requesterEmail) {
+      user = await this.userRepo.findOne({ where: { email: dto.requesterEmail } });
+    }
+    if (!user) {
+      user = await this.userRepo.findOne({ where: { role: 'user' } });
+    }
 
     const request = this.reqRepo.create({
       id: randomUUID(),
       ticketNumber,
-      requesterId: dto.requesterId || 'usr-1',
-      requesterName: dto.requesterName || 'Sarah Jenkins',
-      requesterEmail: dto.requesterEmail || 's.jenkins@org.corp',
-      requesterDept: dto.requesterDept || 'Financial Operations',
-      requesterPhone: dto.requesterPhone || '+1 (555) 234-5678',
-      locationBuilding: dto.locationBuilding || 'Building 2',
-      locationFloor: dto.locationFloor || 'Floor 3',
-      locationRoom: dto.locationRoom || 'Room 304',
-      title: dto.title,
-      description: dto.description,
-      category: dto.category || 'Hardware',
+      requesterId: dto.requesterId || user?.id || 'usr-sarah-jenkins',
+      requesterName: dto.requesterName || user?.name || 'Sarah Jenkins',
+      requesterEmail: dto.requesterEmail || user?.email || 's.jenkins@org.corp',
+      requesterDept: dto.requesterDept || user?.department || 'Financial Operations',
+      requesterPhone: dto.requesterPhone || user?.phone || '+1 (555) 234-5678',
+      locationBuilding: dto.locationBuilding || user?.building || 'Building 2',
+      locationFloor: dto.locationFloor || user?.floor || 'Floor 3',
+      locationRoom: dto.locationRoom || user?.room || 'Room 304',
+      title,
+      description: desc,
+      category: dto.category || 'General',
       urgency: dto.urgency || 'medium',
       status: 'pending_admin',
       createdAt: new Date(),
@@ -50,7 +84,7 @@ export class RequestsService {
       'admin',
       'admin',
       `📥 New Request: ${saved.ticketNumber}`,
-      `Submitted by ${saved.requesterName} (${saved.requesterDept}) at ${saved.locationRoom}. Priority: ${saved.urgency.toUpperCase()}.`,
+      `Submitted by ${saved.requesterName} (${saved.requesterDept}) at ${saved.locationRoom}. Priority: ${(saved.urgency || 'medium').toUpperCase()}.`,
       'alert',
       saved.id,
       saved.ticketNumber,
@@ -78,8 +112,10 @@ export class RequestsService {
   }
 
   async findOne(id: string): Promise<ServiceRequestEntity> {
-    const req = await this.reqRepo.findOne({ where: { id } });
-    if (!req) throw new NotFoundException(`Request with ID ${id} not found`);
+    const req = await this.reqRepo.findOne({
+      where: [{ id }, { ticketNumber: id }],
+    });
+    if (!req) throw new NotFoundException(`Request with ID or ticket number ${id} not found`);
     return req;
   }
 
@@ -169,20 +205,35 @@ export class RequestsService {
 
   async terminateSession(
     requestId: string,
-    rating: number,
+    rating?: number,
     feedback?: string,
+    requesterUserId?: string,
   ): Promise<{ request: ServiceRequestEntity; technician: TechnicianEntity | null }> {
     const req = await this.findOne(requestId);
-    if (req.status !== 'completed_by_it') {
+
+    if (requesterUserId && req.requesterId && req.requesterId !== requesterUserId) {
+      throw new BadRequestException('Unauthorized: You can only terminate your own service sessions.');
+    }
+
+    const terminableStatuses = [
+      'assigned',
+      'in_progress',
+      'completed_by_it',
+      'pending_verification',
+    ];
+    const normalizedStatus = req.status?.toLowerCase();
+    if (!terminableStatuses.includes(normalizedStatus)) {
       throw new BadRequestException(
-        `Cannot terminate session. Ticket must be in 'completed_by_it' status (current status: ${req.status}).`,
+        `Cannot terminate session on ticket in status: ${req.status}. Must be in 'assigned', 'in_progress', or 'completed_by_it' state.`,
       );
     }
 
     const now = new Date();
     req.status = 'session_terminated';
     req.terminatedAt = now;
-    req.userRating = Math.max(1, Math.min(5, Math.round(rating || 5)));
+    if (rating !== undefined && rating !== null) {
+      req.userRating = Math.max(1, Math.min(5, Math.round(rating)));
+    }
     req.userFeedback = feedback || null;
     req.updatedAt = now;
     const savedReq = await this.reqRepo.save(req);
@@ -196,12 +247,14 @@ export class RequestsService {
         tech.currentRequestId = null;
         tech.totalCompletedJobs = (tech.totalCompletedJobs || 0) + 1;
 
-        const currentRatingsCount = tech.ratingsCount || 0;
-        const currentRating = Number(tech.rating) || 5.0;
-        const newCount = currentRatingsCount + 1;
-        const newRating = (currentRating * currentRatingsCount + req.userRating) / newCount;
-        tech.rating = Math.round(newRating * 100) / 100;
-        tech.ratingsCount = newCount;
+        if (req.userRating !== null && req.userRating !== undefined) {
+          const currentRatingsCount = tech.ratingsCount || 0;
+          const currentRating = Number(tech.rating) || 5.0;
+          const newCount = currentRatingsCount + 1;
+          const newRating = (currentRating * currentRatingsCount + req.userRating) / newCount;
+          tech.rating = Math.round(newRating * 100) / 100;
+          tech.ratingsCount = newCount;
+        }
         updatedTech = await this.techRepo.save(tech);
 
         // Notify Technician of release
@@ -209,7 +262,7 @@ export class RequestsService {
           'it_guy',
           tech.id,
           `✅ Session Terminated: ${req.ticketNumber}`,
-          `Requester ${req.requesterName} terminated the session with a ${req.userRating}★ rating! Your status is now UNOCCUPIED and available for new dispatches.`,
+          `Requester ${req.requesterName} terminated the session. Your status is now UNOCCUPIED and available for new dispatches.`,
           'termination',
           req.id,
           req.ticketNumber,
@@ -222,7 +275,7 @@ export class RequestsService {
       'admin',
       'admin',
       `🏁 Ticket Closed: ${req.ticketNumber}`,
-      `Requester ${req.requesterName} signed off on ${req.ticketNumber} (${req.userRating}★). Technician ${req.assignedTechnicianName} is now unoccupied.`,
+      `Requester ${req.requesterName} signed off on ${req.ticketNumber}. Technician ${req.assignedTechnicianName || 'N/A'} is now unoccupied.`,
       'termination',
       req.id,
       req.ticketNumber,
@@ -233,7 +286,7 @@ export class RequestsService {
       req.requesterName,
       'user',
       'TERMINATED_SESSION',
-      `Terminated session for ${req.ticketNumber} with ${req.userRating}★ rating. Technician ${req.assignedTechnicianName} released to unoccupied.`,
+      `Terminated session for ${req.ticketNumber}. Technician ${req.assignedTechnicianName || 'N/A'} released to unoccupied.`,
       req.id,
     );
 

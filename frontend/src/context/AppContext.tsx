@@ -26,7 +26,6 @@ import {
   loginUser,
   registerUser,
 } from '../services/api';
-import { sound } from '../utils/sound';
 
 interface AppContextType {
   currentUser: UserProfile | null;
@@ -37,8 +36,6 @@ interface AppContextType {
   notifications: AppNotification[];
   auditLogs: AuditLog[];
   loading: boolean;
-  soundEnabled: boolean;
-  setSoundEnabled: (enabled: boolean) => void;
   unreadCount: number;
   isNotifDrawerOpen: boolean;
   setIsNotifDrawerOpen: (open: boolean) => void;
@@ -58,7 +55,7 @@ interface AppContextType {
   dispatchTechnician: (requestId: string, technicianId: string) => Promise<void>;
   startService: (requestId: string) => Promise<void>;
   completeService: (requestId: string, notes: string) => Promise<void>;
-  terminateSession: (requestId: string, rating: number, feedback?: string) => Promise<void>;
+  terminateSession: (requestId: string, rating?: number, feedback?: string) => Promise<void>;
   toggleAttendance: (technicianId: string, status: TechnicianStatus) => Promise<void>;
   markNotifRead: (id: string) => Promise<void>;
   markAllNotifsRead: () => Promise<void>;
@@ -92,15 +89,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [soundEnabled, setSoundEnabledState] = useState<boolean>(true);
   const [isNotifDrawerOpen, setIsNotifDrawerOpen] = useState<boolean>(false);
   const [dispatchModalTicket, setDispatchModalTicket] = useState<ServiceRequest | null>(null);
   const [terminationModalTicket, setTerminationModalTicket] = useState<ServiceRequest | null>(null);
-
-  const setSoundEnabled = (enabled: boolean) => {
-    sound.enabled = enabled;
-    setSoundEnabledState(enabled);
-  };
 
   const refreshAll = useCallback(async () => {
     try {
@@ -112,8 +103,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         fetchAuditLogs(),
       ]);
 
+      const normalizedRequests = (reqsData || []).map((r: any) => ({
+        ...r,
+        id: r.id || r.requestId,
+        assignedTechnicianId: r.assignedTechnicianId || r.assignedTechId || null,
+      }));
+
       setTechnicians(techsData);
-      setRequests(reqsData);
+      setRequests(normalizedRequests);
       setOdds(oddsData);
       setNotifications(notifsData);
       setAuditLogs(auditData);
@@ -137,10 +134,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [currentUser]);
 
-  // Polling every 3.5 seconds
+  // Polling every 2 seconds for responsive real-time state synchronization
   useEffect(() => {
     refreshAll();
-    const interval = setInterval(refreshAll, 3500);
+    const interval = setInterval(refreshAll, 2000);
     return () => clearInterval(interval);
   }, [refreshAll]);
 
@@ -154,7 +151,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } else {
       localStorage.removeItem('dispatch_auth_tech');
     }
-    sound.playSuccessChime();
     await refreshAll();
   };
 
@@ -168,7 +164,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } else {
       localStorage.removeItem('dispatch_auth_tech');
     }
-    sound.playSuccessChime();
     await refreshAll();
   };
 
@@ -181,17 +176,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const createRequest = async (payload: CreateRequestPayload): Promise<ServiceRequest> => {
     if (!currentUser) throw new Error('Not logged in');
+    const desc = payload.description || payload.title || 'IT Service Request';
+    const title = payload.title || (desc.length > 60 ? desc.slice(0, 57) + '...' : desc);
+
     const fullPayload: CreateRequestPayload = {
-      ...payload,
+      title,
+      description: desc,
+      category: payload.category || 'General',
+      urgency: payload.urgency || 'medium',
+      locationBuilding: payload.locationBuilding || currentUser.building || 'Building 2',
+      locationFloor: payload.locationFloor || currentUser.floor || 'Floor 3',
+      locationRoom: payload.locationRoom || currentUser.room || 'Room 304',
       requesterId: currentUser.id,
       requesterName: currentUser.name,
       requesterEmail: currentUser.email,
-      requesterDept: currentUser.department,
+      requesterDept: currentUser.department || undefined,
       requesterPhone: currentUser.phone,
     };
 
     const req = await createServiceRequest(fullPayload);
-    sound.playAlertTone();
     await refreshAll();
     return req;
   };
@@ -202,31 +205,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       technicianId,
       currentUser?.name || 'Administrator',
     );
-    sound.playDispatchChime();
     setDispatchModalTicket(null);
     await refreshAll();
   };
 
   const startService = async (requestId: string) => {
     await startServiceTask(requestId);
-    sound.playAlertTone();
     await refreshAll();
   };
 
   const completeService = async (requestId: string, notes: string) => {
     await completeServiceTask(requestId, notes);
-    sound.playAlertTone();
     await refreshAll();
   };
 
-  const terminateSession = async (requestId: string, rating: number, feedback?: string) => {
-    await terminateServiceSession(requestId, rating, feedback);
+  const terminateSession = async (requestId: string, rating?: number, feedback?: string) => {
+    await terminateServiceSession(requestId, rating, feedback, currentUser?.id);
     confetti({
       particleCount: 100,
       spread: 70,
       origin: { y: 0.6 },
     });
-    sound.playSuccessChime();
     setTerminationModalTicket(null);
     await refreshAll();
   };
@@ -266,8 +265,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         notifications,
         auditLogs,
         loading,
-        soundEnabled,
-        setSoundEnabled,
         unreadCount,
         isNotifDrawerOpen,
         setIsNotifDrawerOpen,

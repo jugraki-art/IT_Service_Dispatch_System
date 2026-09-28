@@ -3,7 +3,6 @@ import { useApp } from '../context/AppContext';
 import {
   CheckCircle2,
   Clock,
-  Star,
   Zap,
   Building,
   AlertTriangle,
@@ -103,23 +102,13 @@ export const ITGuyPortal: React.FC = () => {
                 {currentITGuy.status.toUpperCase()}
               </span>
             </div>
-            <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '2px' }}>
-              {currentITGuy.roleTitle} • {currentITGuy.department}
-            </div>
           </div>
         </div>
 
         {/* Technician Selector & Live Metrics */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end' }}>
-              <Star size={16} fill="#f59e0b" color="#f59e0b" />
-              <strong style={{ fontSize: '1.1rem' }}>{currentITGuy.rating}</strong>
-              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                ({currentITGuy.ratingsCount} reviews)
-              </span>
-            </div>
-            <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
+            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a' }}>
               {currentITGuy.totalCompletedJobs} Completed Jobs
             </div>
           </div>
@@ -232,10 +221,10 @@ export const ITGuyPortal: React.FC = () => {
                 CLASSIFICATION
               </div>
               <div style={{ fontSize: '0.85rem', color: '#0f172a', fontWeight: 600, marginTop: '2px' }}>
-                {activeTask.category}
+                {activeTask.category || 'General'}
               </div>
-              <span className={`badge badge-urgent-${activeTask.urgency}`} style={{ marginTop: '4px' }}>
-                Priority: {activeTask.urgency.toUpperCase()}
+              <span className={`badge badge-urgent-${activeTask.urgency || 'medium'}`} style={{ marginTop: '4px' }}>
+                Priority: {(activeTask.urgency || 'medium').toUpperCase()}
               </span>
             </div>
           </div>
@@ -330,7 +319,7 @@ export const ITGuyPortal: React.FC = () => {
                     Holding State: Awaiting Requester Session Termination
                   </h4>
                   <p style={{ fontSize: '0.85rem', color: '#b45309', marginTop: '4px', lineHeight: 1.4 }}>
-                    You have marked your technical work completed! Per organizational system rules, your status remains <strong>OCCUPIED</strong> until the service requester (<strong>{activeTask.requesterName}</strong>) inspects the repair, submits a rating, and terminates the session.
+                    You have marked your technical work completed! Per organizational system rules, your status remains <strong>OCCUPIED</strong> until the service requester (<strong>{activeTask.requesterName}</strong>) inspects the repair and terminates the session.
                   </p>
                   <div style={{ fontSize: '0.8rem', color: '#92400e', marginTop: '6px' }}>
                     <strong>Logged Notes:</strong> "{activeTask.resolutionNotes}"
@@ -347,7 +336,7 @@ export const ITGuyPortal: React.FC = () => {
         <div className="card-header">
           <div className="card-title">
             <CheckCircle2 size={18} style={{ color: '#10b981' }} />
-            <span>My Service History & Ratings ({pastTasks.length})</span>
+            <span>My Service History ({pastTasks.length})</span>
           </div>
         </div>
 
@@ -364,22 +353,8 @@ export const ITGuyPortal: React.FC = () => {
                   <div className="ticket-title">{t.title}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ display: 'flex', color: '#f59e0b' }}>
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        size={14}
-                        fill={i < (t.userRating || 0) ? '#f59e0b' : 'none'}
-                        color="#f59e0b"
-                      />
-                    ))}
-                  </div>
                   <span className="badge badge-session_terminated">Closed</span>
                 </div>
-              </div>
-
-              <div style={{ fontSize: '0.85rem', color: '#475569', marginBottom: '6px' }}>
-                <strong>Requester Feedback:</strong> "{t.userFeedback || 'Service signed off successfully.'}"
               </div>
 
               <div style={{ fontSize: '0.8rem', color: '#065f46', background: '#ecfdf5', padding: '6px 10px', borderRadius: '6px' }}>

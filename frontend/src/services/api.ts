@@ -14,7 +14,9 @@ export type RequestStatus =
   | 'assigned'
   | 'in_progress'
   | 'completed_by_it'
-  | 'session_terminated';
+  | 'session_terminated'
+  | 'pending_verification'
+  | 'completed';
 export type RequestUrgency = 'low' | 'medium' | 'high' | 'critical';
 
 export interface UserProfile {
@@ -22,10 +24,10 @@ export interface UserProfile {
   name: string;
   email: string;
   role: 'user' | 'admin' | 'it_guy';
-  department: string;
-  building: string;
-  floor: string;
-  room: string;
+  department?: string | null;
+  building?: string | null;
+  floor?: string | null;
+  room?: string | null;
   phone: string;
   avatarUrl: string;
   technicianId?: string | null;
@@ -134,18 +136,18 @@ export interface AuditLog {
 }
 
 export interface CreateRequestPayload {
-  title: string;
   description: string;
-  category: string;
-  urgency: RequestUrgency;
+  title?: string;
+  category?: string;
+  urgency?: RequestUrgency;
   requesterId?: string;
   requesterName?: string;
   requesterEmail?: string;
   requesterDept?: string;
   requesterPhone?: string;
-  locationBuilding: string;
-  locationFloor: string;
-  locationRoom: string;
+  locationBuilding?: string;
+  locationFloor?: string;
+  locationRoom?: string;
 }
 
 export interface RegisterPayload {
@@ -153,11 +155,11 @@ export interface RegisterPayload {
   email: string;
   password: string;
   role: 'user' | 'it_guy'; // Admin cannot be chosen!
-  department: string;
+  department?: string;
   phone: string;
-  building: string;
-  floor: string;
-  room: string;
+  building?: string;
+  floor?: string;
+  room?: string;
   roleTitle?: string;
 }
 
@@ -252,10 +254,16 @@ export async function completeServiceTask(
 
 export async function terminateServiceSession(
   requestId: string,
-  rating: number,
+  rating?: number,
   feedback?: string,
+  requesterUserId?: string,
 ): Promise<{ request: ServiceRequest; technician: ITGuy | null }> {
-  const res = await api.post(`/requests/${requestId}/terminate`, { rating, feedback });
+  const res = await api.post(`/requests/${requestId}/terminate`, {
+    rating,
+    feedback,
+    requesterUserId,
+    requestId,
+  });
   return res.data;
 }
 

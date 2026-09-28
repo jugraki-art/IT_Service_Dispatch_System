@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  BadRequestException,
+} from '@nestjs/common';
 import { RequestsService } from './requests.service.js';
 import { CreateRequestDto } from './dto/create-request.dto.js';
 import { CompleteServiceDto } from './dto/complete-service.dto.js';
@@ -10,7 +18,14 @@ export class RequestsController {
 
   @Post()
   async create(@Body() dto: CreateRequestDto) {
-    return this.requestsService.create(dto);
+    try {
+      return await this.requestsService.create(dto);
+    } catch (err: any) {
+      console.error('ERROR in create request:', err);
+      throw new BadRequestException(
+        `Failed to create request: ${err?.message || err}`,
+      );
+    }
   }
 
   @Get()
@@ -33,12 +48,35 @@ export class RequestsController {
   }
 
   @Post(':id/complete')
-  async completeService(@Param('id') id: string, @Body() dto: CompleteServiceDto) {
+  async completeService(
+    @Param('id') id: string,
+    @Body() dto: CompleteServiceDto,
+  ) {
     return this.requestsService.completeService(id, dto.resolutionNotes);
   }
 
   @Post(':id/terminate')
-  async terminateSession(@Param('id') id: string, @Body() dto: TerminateSessionDto) {
-    return this.requestsService.terminateSession(id, dto.rating, dto.feedback);
+  async terminateSession(
+    @Param('id') id: string,
+    @Body() dto: TerminateSessionDto,
+  ) {
+    const targetId = id || dto?.requestId;
+    return this.requestsService.terminateSession(
+      targetId!,
+      dto?.rating,
+      dto?.feedback,
+      dto?.requesterUserId || dto?.requesterId,
+    );
+  }
+
+  @Post('terminate')
+  async terminateSessionBody(@Body() dto: TerminateSessionDto) {
+    const targetId = dto?.requestId;
+    return this.requestsService.terminateSession(
+      targetId!,
+      dto?.rating,
+      dto?.feedback,
+      dto?.requesterUserId || dto?.requesterId,
+    );
   }
 }

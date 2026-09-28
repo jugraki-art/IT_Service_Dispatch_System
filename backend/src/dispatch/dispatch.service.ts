@@ -283,7 +283,7 @@ export class DispatchService {
       'user',
       request.requesterId,
       `👨‍🔧 Technician Dispatched: ${technician.name}`,
-      `${technician.name} (${technician.roleTitle}) has been assigned to your ticket ${request.ticketNumber} and is en route.`,
+      `${technician.name} has been assigned to your ticket ${request.ticketNumber} and is en route.`,
       'status_update',
       request.id,
       request.ticketNumber,

@@ -23,25 +23,25 @@ export class ServiceRequestEntity {
   @Column({ type: 'varchar', length: 50 })
   requesterPhone: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 50, default: 'Building 2', nullable: true })
   locationBuilding: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 50, default: 'Floor 3', nullable: true })
   locationFloor: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 50, default: 'Room 304', nullable: true })
   locationRoom: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, default: 'IT Service Request', nullable: true })
   title: string;
 
   @Column({ type: 'text' })
   description: string;
 
-  @Column({ type: 'varchar', length: 50, default: 'Hardware' })
+  @Column({ type: 'varchar', length: 50, default: 'General', nullable: true })
   category: string;
 
-  @Column({ type: 'varchar', length: 20, default: 'medium' })
+  @Column({ type: 'varchar', length: 20, default: 'medium', nullable: true })
   urgency: 'low' | 'medium' | 'high' | 'critical';
 
   @Column({ type: 'varchar', length: 30, default: 'pending_admin' })

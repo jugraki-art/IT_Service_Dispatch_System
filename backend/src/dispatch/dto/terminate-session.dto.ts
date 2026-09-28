@@ -1,4 +1,7 @@
 export class TerminateSessionDto {
-  rating: number;
+  rating?: number;
   feedback?: string;
+  requestId?: string;
+  requesterUserId?: string;
+  requesterId?: string;
 }

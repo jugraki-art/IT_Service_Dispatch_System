@@ -3,10 +3,10 @@ export class RegisterDto {
   email: string;
   password: string;
   role: 'user' | 'it_guy';
-  department: string;
+  department?: string;
   phone: string;
-  building: string;
-  floor: string;
-  room: string;
+  building?: string;
+  floor?: string;
+  room?: string;
   roleTitle?: string;
 }
